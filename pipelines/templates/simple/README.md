@@ -1,1 +1,0 @@
-To render the template download [ytt](https://github.com/vmware-tanzu/carvel-ytt/releases) and run `ytt -f pipeline.yml -f vars.yml > rendered.yml`. `rendered.yml` can then be passed to `fly set-pipeline` or a `set_pipeline` step to set the pipeline.
