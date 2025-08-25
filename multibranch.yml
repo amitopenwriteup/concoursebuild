@@ -19,6 +19,7 @@ jobs:
   - name: build-and-use-image-main
     plan:
       - get: concourse-examples-main
+        trigger: true
       - task: build-task-image
         privileged: true
         config:
@@ -47,6 +48,7 @@ jobs:
   - name: build-and-use-image-dev
     plan:
       - get: concourse-examples-dev
+        trigger: true
       - task: build-task-image
         privileged: true
         config:
