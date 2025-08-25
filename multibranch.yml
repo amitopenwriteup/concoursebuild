@@ -1,0 +1,74 @@
+resources:
+  # Repo for main branch
+  - name: concourse-examples-main
+    type: git
+    icon: github
+    source:
+      uri: https://github.com/concourse/examples.git
+      branch: main
+
+  # Repo for dev branch
+  - name: concourse-examples-dev
+    type: git
+    icon: github
+    source:
+      uri: https://github.com/concourse/examples.git
+      branch: dev
+
+jobs:
+  - name: build-and-use-image-main
+    plan:
+      - get: concourse-examples-main
+      - task: build-task-image
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: concourse/oci-build-task
+          inputs:
+            - name: concourse-examples-main
+          outputs:
+            - name: image
+          params:
+            CONTEXT: concourse-examples-main/Dockerfiles/simple
+            UNPACK_ROOTFS: "true"
+          run:
+            path: build
+      - task: use-built-image-in-task
+        image: image
+        config:
+          platform: linux
+          run:
+            path: cat
+            args: ["/stranger"]
+
+  - name: build-and-use-image-dev
+    plan:
+      - get: concourse-examples-dev
+      - task: build-task-image
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: concourse/oci-build-task
+          inputs:
+            - name: concourse-examples-dev
+          outputs:
+            - name: image
+          params:
+            CONTEXT: concourse-examples-dev/Dockerfiles/simple
+            UNPACK_ROOTFS: "true"
+          run:
+            path: build
+      - task: use-built-image-in-task
+        image: image
+        config:
+          platform: linux
+          run:
+            path: cat
+            args: ["/stranger"]
+
