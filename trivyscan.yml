@@ -1,0 +1,54 @@
+resources:
+  # The repo with our Dockerfile
+  - name: concourse-examples
+    type: git
+    icon: github
+    source:
+      uri: https://github.com/concourse/examples.git
+      branch: main
+
+jobs:
+  - name: build-and-scan-image
+    plan:
+      - get: concourse-examples
+        trigger: true
+
+      # Build the image with oci-build-task
+      - task: build-task-image
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: concourse/oci-build-task
+          inputs:
+            - name: concourse-examples
+          outputs:
+            - name: image
+          params:
+            CONTEXT: concourse-examples/Dockerfiles/simple
+            UNPACK_ROOTFS: "true"
+          run:
+            path: build
+
+      # Run Trivy scan
+      - task: trivy-scan
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: aquasec/trivy  # official Trivy image
+              tag: latest
+          inputs:
+            - name: image
+          run:
+            path: sh
+            args:
+              - -exc
+              - |
+                echo "Scanning image with Trivy..."
+                # The oci-build-task output is an OCI image tarball at ./image/image.tar
+                trivy image --input ./image/image.tar --exit-code 0 --severity HIGH,CRITICAL
+                echo "Scan completed successfully!"
